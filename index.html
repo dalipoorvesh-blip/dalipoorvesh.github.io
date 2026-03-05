@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tic Tac Toe</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;600;700&family=Reenie+Beanie&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #c8b89a;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Caveat', cursive;
+    background-image:
+      repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0,0,0,0.015) 10px, rgba(0,0,0,0.015) 11px);
+  }
+
+  .book-wrap {
+    perspective: 1200px;
+  }
+
+  .book {
+    width: 560px;
+    min-height: 700px;
+    background: #fdf6e3;
+    border-radius: 3px 12px 12px 3px;
+    box-shadow:
+      -6px 0 0 #b5a48a,
+      -12px 0 0 #c9b89c,
+      -14px 4px 10px rgba(0,0,0,0.3),
+      6px 8px 30px rgba(0,0,0,0.4),
+      inset 30px 0 40px rgba(0,0,0,0.04);
+    position: relative;
+    padding: 40px 50px 40px 60px;
+    transform: rotateY(-3deg);
+    background-image:
+      repeating-linear-gradient(
+        transparent,
+        transparent 31px,
+        #c9d4e8 31px,
+        #c9d4e8 32px
+      );
+    background-size: 100% 32px;
+    background-position: 0 8px;
+  }
+
+  .book::before {
+    content: '';
+    position: absolute;
+    left: -14px;
+    top: 0;
+    width: 14px;
+    height: 100%;
+    background: linear-gradient(to right, #8a7560, #b5a48a);
+    border-radius: 3px 0 0 3px;
+    box-shadow: -2px 0 5px rgba(0,0,0,0.3);
+  }
+
+  .book::after {
+    content: '';
+    position: absolute;
+    left: 55px;
+    top: 0;
+    width: 1.5px;
+    height: 100%;
+    background: rgba(220, 100, 100, 0.35);
+  }
+
+  .holes {
+    position: absolute;
+    left: 28px;
+    top: 0;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    padding: 40px 0;
+  }
+  .hole {
+    width: 14px;
+    height: 14px;
+    background: #c8b89a;
+    border-radius: 50%;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.4);
+    flex-shrink: 0;
+  }
+
+  h1 {
+    font-family: 'Reenie Beanie', cursive;
+    font-size: 3.2rem;
+    color: #2c1810;
+    text-align: center;
+    margin-bottom: 2px;
+    letter-spacing: 2px;
+    transform: rotate(-1.2deg);
+    display: block;
+  }
+
+  .subtitle {
+    text-align: center;
+    font-size: 1.1rem;
+    color: #7a6652;
+    margin-bottom: 22px;
+    transform: rotate(0.5deg);
+    display: block;
+  }
+
+  .scoreboard {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin-bottom: 18px;
+  }
+
+  .score-item {
+    text-align: center;
+    background: rgba(255,255,255,0.45);
+    border: 1.5px solid #a89880;
+    border-radius: 5px;
+    padding: 5px 18px;
+  }
+  .score-item:nth-child(1) { transform: rotate(-0.6deg); }
+  .score-item:nth-child(2) { transform: rotate(0.3deg); }
+  .score-item:nth-child(3) { transform: rotate(-0.4deg); }
+
+  .score-label { font-size: 0.95rem; color: #7a6652; }
+  .score-num { font-size: 2rem; font-weight: 700; color: #2c1810; }
+  .score-item.xs .score-num { color: #c0392b; }
+  .score-item.os .score-num { color: #1a5276; }
+
+  .turn-row {
+    text-align: center;
+    font-size: 1.3rem;
+    color: #3d2b1f;
+    margin-bottom: 14px;
+    min-height: 32px;
+    transform: rotate(-0.3deg);
+  }
+
+  .grid-wrap {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 26px;
+  }
+
+  .grid {
+    position: relative;
+    width: 270px;
+    height: 270px;
+  }
+
+  .grid-svg {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .grid-line {
+    stroke: #3d2b1f;
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    fill: none;
+    stroke-dasharray: 300;
+    stroke-dashoffset: 300;
+    animation: drawLine 0.4s ease forwards;
+  }
+  .grid-line:nth-child(2) { animation-delay: 0.1s; }
+  .grid-line:nth-child(3) { animation-delay: 0.2s; }
+  .grid-line:nth-child(4) { animation-delay: 0.3s; }
+
+  @keyframes drawLine { to { stroke-dashoffset: 0; } }
+
+  .cells {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    z-index: 2;
+  }
+
+  .cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+  .cell:hover:not(.taken) { background: rgba(200,184,154,0.15); }
+
+  .cell svg { width: 62px; height: 62px; overflow: visible; }
+
+  .x-line {
+    stroke: #c0392b;
+    stroke-width: 3.8;
+    stroke-linecap: round;
+    fill: none;
+    stroke-dasharray: 120;
+    stroke-dashoffset: 120;
+    animation: drawMark 0.22s ease forwards;
+  }
+  .x-line.second { animation-delay: 0.2s; }
+
+  .o-circle {
+    stroke: #1a5276;
+    stroke-width: 3.8;
+    stroke-linecap: round;
+    fill: none;
+    stroke-dasharray: 230;
+    stroke-dashoffset: 230;
+    animation: drawO 0.45s ease forwards;
+  }
+
+  @keyframes drawMark { to { stroke-dashoffset: 0; } }
+  @keyframes drawO { to { stroke-dashoffset: 0; } }
+
+  .win-svg {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 5;
+  }
+
+  .win-stroke {
+    stroke: #d35400;
+    stroke-width: 4.5;
+    stroke-linecap: round;
+    fill: none;
+    opacity: 0.72;
+    stroke-dasharray: 600;
+    stroke-dashoffset: 600;
+    animation: drawWin 0.5s ease forwards;
+  }
+
+  @keyframes drawWin { to { stroke-dashoffset: 0; } }
+
+  .btn-row {
+    display: flex;
+    justify-content: center;
+    gap: 18px;
+    margin-top: 4px;
+  }
+
+  button {
+    font-family: 'Caveat', cursive;
+    font-size: 1.3rem;
+    padding: 8px 26px;
+    background: transparent;
+    border: 2px solid #3d2b1f;
+    border-radius: 4px;
+    color: #3d2b1f;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  button:nth-child(1) { transform: rotate(-0.6deg); }
+  button:nth-child(2) { transform: rotate(0.5deg); }
+  button:hover {
+    background: rgba(61,43,31,0.09);
+    transform: rotate(0.5deg) scale(1.04);
+  }
+  button:active { transform: scale(0.97); }
+
+  /* Scribble doodle corner */
+  .doodle {
+    position: absolute;
+    bottom: 18px;
+    right: 24px;
+    font-size: 0.9rem;
+    color: #a89070;
+    transform: rotate(2deg);
+    font-style: italic;
+  }
+</style>
+</head>
+<body>
+
+<div class="book-wrap">
+  <div class="book">
+    <div class="holes">
+      <div class="hole"></div><div class="hole"></div>
+      <div class="hole"></div><div class="hole"></div>
+      <div class="hole"></div><div class="hole"></div>
+    </div>
+
+    <h1>Tic  Tac  Toe</h1>
+    <span class="subtitle">— pass &amp; play —</span>
+
+    <div class="scoreboard">
+      <div class="score-item xs">
+        <div class="score-label">Player X</div>
+        <div class="score-num" id="sX">0</div>
+      </div>
+      <div class="score-item">
+        <div class="score-label">Draws</div>
+        <div class="score-num" id="sD">0</div>
+      </div>
+      <div class="score-item os">
+        <div class="score-label">Player O</div>
+        <div class="score-num" id="sO">0</div>
+      </div>
+    </div>
+
+    <div class="turn-row" id="turnRow">X's turn ✏️</div>
+
+    <div class="grid-wrap">
+      <div class="grid" id="grid">
+        <svg class="grid-svg" viewBox="0 0 270 270" id="gridSvg">
+          <defs>
+            <filter id="r0">
+              <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="3" result="n"/>
+              <feDisplacementMap in="SourceGraphic" in2="n" scale="1.5" xChannelSelector="R" yChannelSelector="G"/>
+            </filter>
+          </defs>
+          <path class="grid-line" d="M90,12 C89,60 91,140 90,258" filter="url(#r0)"/>
+          <path class="grid-line" d="M180,12 C179,60 181,140 180,258" filter="url(#r0)"/>
+          <path class="grid-line" d="M12,90 C60,89 140,91 258,90" filter="url(#r0)"/>
+          <path class="grid-line" d="M12,180 C60,179 140,181 258,180" filter="url(#r0)"/>
+        </svg>
+        <div class="cells" id="cells"></div>
+        <svg class="win-svg" id="winSvg" viewBox="0 0 270 270" style="display:none"></svg>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button onclick="newGame()">↺ New Game</button>
+      <button onclick="resetAll()">✕ Reset Scores</button>
+    </div>
+
+    <div class="doodle">pg. 1</div>
+  </div>
+</div>
+
+<script>
+// ── Audio ─────────────────────────────────────────────────────
+let actx;
+function getActx() { return actx || (actx = new (window.AudioContext||window.webkitAudioContext)()); }
+
+function noise(dur, freq, vol=0.3) {
+  const c = getActx();
+  const buf = c.createBuffer(1, c.sampleRate*dur, c.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i=0;i<d.length;i++) {
+    const t=i/c.sampleRate, env=Math.sin(Math.PI*t/dur);
+    d[i]=(Math.random()*2-1)*env*vol
+       + Math.sin(2*Math.PI*freq*t)*env*0.04;
+  }
+  const src=c.createBufferSource(); src.buffer=buf;
+  const bpf=c.createBiquadFilter(); bpf.type='bandpass';
+  bpf.frequency.value=freq; bpf.Q.value=0.5;
+  const g=c.createGain(); g.gain.setValueAtTime(0.5,c.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+dur);
+  src.connect(bpf); bpf.connect(g); g.connect(c.destination);
+  src.start(); src.stop(c.currentTime+dur);
+}
+
+const playX = () => { noise(0.15,3200,0.28); setTimeout(()=>noise(0.15,2800,0.25),200); };
+const playO = () => noise(0.48,2000,0.22);
+const playPage = () => {
+  const c=getActx(), dur=0.2;
+  const buf=c.createBuffer(1,c.sampleRate*dur,c.sampleRate);
+  const d=buf.getChannelData(0);
+  for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*Math.exp(-i/c.sampleRate*16)*0.5;
+  const src=c.createBufferSource(); src.buffer=buf;
+  const hp=c.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=2500;
+  src.connect(hp); hp.connect(c.destination);
+  src.start(); src.stop(c.currentTime+dur);
+};
+
+// ── Game ──────────────────────────────────────────────────────
+let board=Array(9).fill(null), cur='X', over=false;
+let sc={X:0,O:0,d:0};
+
+const WINS=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+const WCOORDS={
+  '012':[10,45,260,45],'345':[10,135,260,135],'678':[10,225,260,225],
+  '036':[45,10,45,260],'147':[135,10,135,260],'258':[225,10,225,260],
+  '048':[10,10,260,260],'246':[260,10,10,260]
+};
+
+function mkFilter(svg, id) {
+  const d=document.createElementNS('http://www.w3.org/2000/svg','defs');
+  const f=document.createElementNS('http://www.w3.org/2000/svg','filter');
+  f.id=id;
+  const t=document.createElementNS('http://www.w3.org/2000/svg','feTurbulence');
+  t.setAttribute('type','fractalNoise'); t.setAttribute('baseFrequency','0.06');
+  t.setAttribute('numOctaves','3'); t.setAttribute('result','n');
+  const m=document.createElementNS('http://www.w3.org/2000/svg','feDisplacementMap');
+  m.setAttribute('in','SourceGraphic'); m.setAttribute('in2','n');
+  m.setAttribute('scale','2.5'); m.setAttribute('xChannelSelector','R'); m.setAttribute('yChannelSelector','G');
+  f.appendChild(t); f.appendChild(m); d.appendChild(f); svg.appendChild(d);
+}
+
+function buildCells() {
+  const c=document.getElementById('cells');
+  c.innerHTML='';
+  for(let i=0;i<9;i++){
+    const el=document.createElement('div');
+    el.className='cell'; el.dataset.i=i;
+    el.addEventListener('click',onClick);
+    c.appendChild(el);
+  }
+}
+
+function onClick(e) {
+  getActx().resume();
+  const i=+e.currentTarget.dataset.i;
+  if(board[i]||over) return;
+  board[i]=cur;
+  e.currentTarget.classList.add('taken');
+  drawMark(e.currentTarget,cur);
+  cur==='X'?playX():playO();
+
+  const w=checkWin();
+  if(w){
+    over=true; sc[cur]++; updateSc();
+    setTimeout(()=>drawWinLine(w),280);
+    setMsg(`${cur} wins! 🎉`);
+  } else if(board.every(Boolean)){
+    over=true; sc.d++; updateSc();
+    setMsg("Draw! ✏️");
+  } else {
+    cur=cur==='X'?'O':'X';
+    setMsg(`${cur}'s turn ✏️`);
+  }
+}
+
+function drawMark(cell, p) {
+  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svg.setAttribute('viewBox','-5 -5 80 80');
+  svg.setAttribute('width','62'); svg.setAttribute('height','62');
+  const fid='rf'+Math.random().toString(36).slice(2,7);
+  mkFilter(svg, fid);
+
+  if(p==='X'){
+    const l1=document.createElementNS('http://www.w3.org/2000/svg','path');
+    l1.setAttribute('d','M8,8 C22,24 44,46 62,62');
+    l1.setAttribute('filter',`url(#${fid})`);
+    l1.classList.add('x-line');
+
+    const l2=document.createElementNS('http://www.w3.org/2000/svg','path');
+    l2.setAttribute('d','M62,8 C46,24 26,46 8,62');
+    l2.setAttribute('filter',`url(#${fid})`);
+    l2.classList.add('x-line','second');
+
+    svg.appendChild(l1); svg.appendChild(l2);
+  } else {
+    const c=document.createElementNS('http://www.w3.org/2000/svg','path');
+    c.setAttribute('d','M35,5 C57,5 65,20 65,35 C65,53 52,65 35,65 C17,65 5,52 5,35 C5,18 15,5 35,5');
+    c.setAttribute('filter',`url(#${fid})`);
+    c.classList.add('o-circle');
+    svg.appendChild(c);
+  }
+  cell.appendChild(svg);
+}
+
+function checkWin() {
+  for(const w of WINS) if(w.every(i=>board[i]===cur)) return w;
+  return null;
+}
+
+function drawWinLine(combo) {
+  const key=combo.join('');
+  const coords=WCOORDS[key]; if(!coords) return;
+  const svg=document.getElementById('winSvg');
+  svg.style.display='block'; svg.innerHTML='';
+  const fid='wf'+Math.random().toString(36).slice(2,7);
+  mkFilter(svg,fid);
+  const [x1,y1,x2,y2]=coords;
+  const mx=(x1+x2)/2, my=(y1+y2)/2;
+  const p=document.createElementNS('http://www.w3.org/2000/svg','path');
+  p.setAttribute('d',`M${x1},${y1} Q${mx+5},${my-5} ${x2},${y2}`);
+  p.setAttribute('filter',`url(#${fid})`);
+  p.classList.add('win-stroke');
+  svg.appendChild(p);
+  playPage();
+}
+
+function setMsg(m){ document.getElementById('turnRow').textContent=m; }
+function updateSc(){
+  document.getElementById('sX').textContent=sc.X;
+  document.getElementById('sO').textContent=sc.O;
+  document.getElementById('sD').textContent=sc.d;
+}
+
+function newGame(){
+  playPage();
+  board=Array(9).fill(null); cur='X'; over=false;
+  document.getElementById('winSvg').style.display='none';
+  setMsg("X's turn ✏️");
+  buildCells();
+}
+
+function resetAll(){ sc={X:0,O:0,d:0}; updateSc(); newGame(); }
+
+buildCells();
+</script>
+</body>
+</html>
